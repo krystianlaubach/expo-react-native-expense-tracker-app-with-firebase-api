@@ -1,5 +1,6 @@
-import { FlatList, ListRenderItemInfo, StyleSheet, Text } from 'react-native';
+import { FlatList, ListRenderItemInfo } from 'react-native';
 import { ExpenseType } from '../../redux/expensesSlice';
+import ExpenseItem from './ExpenseItem';
 
 type Props = {
     expenses: Array<ExpenseType>,
@@ -14,7 +15,7 @@ export default function ExpensesList({ expenses }: Props): JSX.Element {
         const expense: ExpenseType = itemData.item;
 
         return (
-            <Text>{ expense.description }</Text>
+            <ExpenseItem expense={ expense } />
         );
     };
 
@@ -22,7 +23,3 @@ export default function ExpensesList({ expenses }: Props): JSX.Element {
         <FlatList data={ expenses } keyExtractor={ keyExtractor } renderItem={ renderItem } />
     );
 }
-
-const styles = StyleSheet.create({
-
-});
