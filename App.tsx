@@ -1,3 +1,5 @@
+import 'react-native-get-random-values';
+import { Colours } from './assets/styles/Colours';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -17,9 +19,14 @@ export default function App() {
             <PersistGate persistor={ persistor }>
                 <StatusBar style="light"/>
                 <NavigationContainer>
-                    <Stack.Navigator>
+                    <Stack.Navigator screenOptions={{
+                        headerStyle: { backgroundColor: Colours.blue800 },
+                        headerTintColor: 'white',
+                    }}>
                         <Stack.Screen name='MainScreen' component={ MainScreen } options={{ headerShown: false }} />
-                        <Stack.Screen name='ManageExpense' component={ ManageExpenseScreen } />
+                        <Stack.Screen name='ManageExpense' component={ ManageExpenseScreen } options={{
+                            presentation: 'modal',
+                        }} />
                     </Stack.Navigator>
                 </NavigationContainer>
             </PersistGate>
