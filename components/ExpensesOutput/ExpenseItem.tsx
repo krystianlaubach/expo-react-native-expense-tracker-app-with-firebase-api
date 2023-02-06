@@ -24,7 +24,7 @@ export default function ExpenseItem({ expense }: Props): JSX.Element {
                 <Text style={ styles.textBase }>{ moment(expense.date).format('ddd, D MMMM YYYY') }</Text>
             </View>
             <View style={ styles.amountContainer }>
-                <Text style={ styles.amountText }>£{ expense.amount }</Text>
+                <Text style={ styles.amountText }>£{ expense.amount.toFixed(2) }</Text>
             </View>
         </Pressable>
     );
