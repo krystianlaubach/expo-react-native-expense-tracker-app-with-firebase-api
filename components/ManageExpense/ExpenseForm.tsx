@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import {Alert, KeyboardAvoidingView, NativeSyntheticEvent, StyleSheet, TextInputFocusEventData, View} from 'react-native';
+import { KeyboardAvoidingView, NativeSyntheticEvent, StyleSheet, TextInputFocusEventData, View } from 'react-native';
 import { ExpenseType } from '../../redux/expensesSlice';
 import Input from './Input';
 import Button from '../Buttons/Button';
@@ -16,7 +16,7 @@ type Props = {
 export default function ExpenseForm({ expense, onCancel, onSubmit }: Props): JSX.Element {
     const isEditMode = !!expense;
 
-    const [amountValue, setAmountValue] = useState<string>(isEditMode ? expense.amount.toString() : '');
+    const [amountValue, setAmountValue] = useState<string>(isEditMode ? expense.amount.toFixed(2).toString() : '');
     const [isAmountValid, setIsAmountValid] = useState<boolean>(true);
     const [dateValue, setDateValue] = useState<string>(isEditMode ? expense.date : '');
     const [isDateValid, setIsDateValid] = useState<boolean>(true);
@@ -52,7 +52,10 @@ export default function ExpenseForm({ expense, onCancel, onSubmit }: Props): JSX
 
     const amountChangeHandler = (enteredAmount: string): void => {
         setAmountValue(enteredAmount);
-        validateAmount();
+
+        if (!isAmountValid) {
+            validateAmount();
+        }
     };
 
     const showDatePicker = (event: NativeSyntheticEvent<TextInputFocusEventData>): void => {
@@ -68,12 +71,18 @@ export default function ExpenseForm({ expense, onCancel, onSubmit }: Props): JSX
         setSelectedDate(date);
         setDateValue(moment(date).format('YYYY-MM-DD'));
         hideDatePicker();
-        validateDate();
+
+        if (!isDateValid) {
+            validateDate();
+        }
     };
 
     const descriptionChangeHandler = (enteredDescription: string): void => {
         setDescriptionValue(enteredDescription);
-        validateDescription();
+
+        if (!isDescriptionValid) {
+            validateDescription();
+        }
     };
 
     const submitHandler = () => {

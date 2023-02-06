@@ -1,14 +1,15 @@
-import { useLayoutEffect } from 'react';
+import {useLayoutEffect, useState} from 'react';
 import { Colours } from '../assets/styles/Colours';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { v4 as uuid } from 'uuid';
 import { useDispatch } from 'react-redux';
-import { addExpense, deleteExpense, ExpenseType, updateExpense } from '../redux/expensesSlice';
+import { addExpense, deleteExpense, updateExpense, ExpenseType, ExpenseData } from '../redux/expensesSlice';
+import { storeExpense, updateExpense as sendUpdateRequest, deleteExpense as sendDeleteRequest } from '../services/HttpRequestHandler';
 import IconButton from '../components/Buttons/IconButton';
 import ExpenseForm from '../components/ManageExpense/ExpenseForm';
 import moment from 'moment/moment';
+import LoadingOverlay from '../components/UI/LoadingOverlay';
 
 type Props = {
     route: RouteProp<any>,
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export default function ManageExpenseScreen({ route, navigation }: Props): JSX.Element {
+    const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const expense: ExpenseType|undefined = route.params?.expense;
     const isEditMode = !!expense;
     const dispatch = useDispatch();
@@ -30,49 +32,82 @@ export default function ManageExpenseScreen({ route, navigation }: Props): JSX.E
         navigation.goBack();
     };
 
-    const confirmHandler = (amount: number, date: string, description: string): void => {
+    const confirmHandler = async (amount: number, date: string, description: string): Promise<void> => {
+        const expenseData: ExpenseData = {
+            description: description,
+            amount: amount,
+            date: moment(date).format('YYYY-MM-DD'),
+        };
+
+        setIsProcessing(true);
+
         if (isEditMode) {
-            dispatch(updateExpense({
-                id: expense.id,
-                data: {
-                    description: description,
-                    amount: amount,
-                    date: moment(date).format('YYYY-MM-DD'),
-                },
-            }));
+            await sendUpdateRequest(expense.id, expenseData)
+                .then((updatedExpenseData: ExpenseData) => {
+                    dispatch(updateExpense({
+                        id: expense.id,
+                        data: updatedExpenseData,
+                    }));
+
+                    setIsProcessing(false);
+                    navigation.goBack();
+                })
+                .catch((error: Error) => {
+                    Alert.alert('An error occurred!', error.message);
+                    setIsProcessing(false);
+                });
         }
 
         if (!isEditMode) {
-            dispatch(addExpense({
-                id: uuid(),
-                description: description,
-                amount: amount,
-                date: moment(date).format('YYYY-MM-DD'),
-            }));
-        }
+            await storeExpense(expenseData)
+                .then((expenseId: string) => {
+                    dispatch(addExpense({
+                        id: expenseId,
+                        description: description,
+                        amount: amount,
+                        date: moment(date).format('YYYY-MM-DD'),
+                    }));
 
-        navigation.goBack();
+                    setIsProcessing(false);
+                    navigation.goBack();
+                })
+                .catch((error: Error) => {
+                    Alert.alert('An error occurred!', error.message);
+                    setIsProcessing(false);
+                });
+        }
     };
 
-    const deleteHandler = (): void => {
+    const deleteHandler = async (): Promise<void> => {
         if (expense) {
-            dispatch(deleteExpense({ id: expense.id }));
-        }
+            setIsProcessing(true);
 
-        navigation.goBack();
+            await sendDeleteRequest(expense.id)
+                .then(() => {
+                    dispatch(deleteExpense({ id: expense.id }));
+                    setIsProcessing(false);
+                    navigation.goBack();
+                })
+                .catch((error: Error) => {
+                    Alert.alert('An error occurred!', error.message);
+                    setIsProcessing(false);
+                });
+        }
     };
 
     return (
-        <ScrollView style={ styles.container }>
-            <ExpenseForm expense={ expense } onCancel={ cancelHandler } onSubmit={ confirmHandler } />
-            { isEditMode && <IconButton
-                icon='trash-can'
-                size={28}
-                color={ Colours.white }
-                style={ styles.deleteButton }
-                onPress={ deleteHandler }
-            /> }
-        </ScrollView>
+        isProcessing
+            ? <LoadingOverlay />
+            : <ScrollView style={ styles.container }>
+                <ExpenseForm expense={ expense } onCancel={ cancelHandler } onSubmit={ confirmHandler } />
+                { isEditMode && <IconButton
+                    icon='trash-can'
+                    size={28}
+                    color={ Colours.white }
+                    style={ styles.deleteButton }
+                    onPress={ deleteHandler }
+                /> }
+            </ScrollView>
     );
 }
 

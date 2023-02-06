@@ -16,13 +16,15 @@ type DeleteExpensePayload = {
     id: string,
 };
 
+export type ExpenseData = {
+    description: string,
+    amount: number,
+    date: string,
+};
+
 type UpdateExpensePayload = {
     id: string,
-    data: {
-        description: string,
-        amount: number,
-        date: string,
-    },
+    data: ExpenseData,
 };
 
 const initialState: ExpensesState = {
@@ -33,8 +35,11 @@ const expensesSlice = createSlice({
     name: 'expenses',
     initialState: initialState,
     reducers: {
+        setExpenses: (state: ExpensesState, action: PayloadAction<any>) => {
+            state.expenses = [...action.payload];
+        },
         addExpense: (state: ExpensesState, action: PayloadAction<ExpenseType>): void => {
-            state.expenses = [{ ...action.payload }, ...state.expenses]
+            state.expenses = [{ ...action.payload }, ...state.expenses];
         },
         deleteExpense: (state: ExpensesState, action: PayloadAction<DeleteExpensePayload>): void => {
             state.expenses.splice(state.expenses.findIndex((expense: ExpenseType) => expense.id === action.payload.id), 1);
@@ -48,5 +53,5 @@ const expensesSlice = createSlice({
     },
 });
 
-export const { addExpense, deleteExpense, updateExpense } = expensesSlice.actions;
+export const { setExpenses, addExpense, deleteExpense, updateExpense } = expensesSlice.actions;
 export default expensesSlice.reducer;
